@@ -34,7 +34,14 @@
  * optimizations are not included to reduce source code size and avoid
  * compile-time configuration.
  */
- 
+
+#ifdef AMD
+#pragma OPENCL EXTENSION cl_amd_printf : enable
+#endif
+
+#ifdef INTEL
+#pragma OPENCL EXTENSION cl_intel_printf : enable
+#endif
 
 /*
  * Function declarations.
@@ -315,10 +322,26 @@ void MD5_Final(unsigned char *result, MD5_CTX *ctx)
 
 __kernel void crack(__global const char *hash, __global char *result)
 {
-    result[0] = 'h';
-    result[1] = 'e';
-    result[2] = 'l';
-    result[3] = 'l';
-    result[4] = 'o';
-    result[5] = '\0';
+    __constant int len = 5;
+    __constant char string[len] = "hello";
+
+    int id = get_global_id(0);
+    printf(">>> [Kernel %d] Running with global id %d\n", id, id);
+
+    // Private variables
+    __private MD5_CTX context;
+    __private unsigned char digest[16];
+
+    // Calculate hash
+    MD5_Init(&context);
+    MD5_Update(&context, (const void *)string, len);
+    MD5_Final(digest, &context);
+
+    // Convert to hex
+    /*__local char hexresult[16];
+    for (int i = 0; i < 16; ++i) {
+        sprintf(&hexresult[i*2], "%02x", (unsigned int)digest[i]);
+    }*/
+
+    printf(">>> [Kernel %d] Hash: %s\n", id, digest);
 }
