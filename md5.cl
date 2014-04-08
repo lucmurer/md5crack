@@ -320,10 +320,10 @@ void MD5_Final(unsigned char *result, MD5_CTX *ctx)
     //memset(ctx, 0, sizeof(*ctx));
 }
 
-__kernel void crack(__global const char *hash, __global char *result)
+__kernel void crack(__global const unsigned char *hash, __global char *result)
 {
-    __constant int len = 5;
-    __constant char string[len] = "hello";
+    __constant int len = 1;
+    __constant char string[len] = "c";
 
     int id = get_global_id(0);
     printf(">>> [Kernel %d] Running with global id %d\n", id, id);
@@ -337,11 +337,11 @@ __kernel void crack(__global const char *hash, __global char *result)
     MD5_Update(&context, (const void *)string, len);
     MD5_Final(digest, &context);
 
-    // Convert to hex
-    /*__local char hexresult[16];
-    for (int i = 0; i < 16; ++i) {
-        sprintf(&hexresult[i*2], "%02x", (unsigned int)digest[i]);
-    }*/
+    //printf(">>> [Kernel %d] Hash: %s vs %s\n", id, hash, digest);
 
-    printf(">>> [Kernel %d] Hash: %s\n", id, digest);
+    if (hash == digest) {
+        printf(">>> [Kernel %d] Hash is c!\n", id);
+    } else {
+        printf(">>> [Kernel %d] Hash is c!\n", id);
+    }
 }

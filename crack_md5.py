@@ -1,14 +1,16 @@
+import binascii
 import pyopencl as cl
-import numpy as np
 
 MAX_PW_LEN = 4
+
+md5 = '4a8a08f09d37b73795649038408b5f33'  # 'c'
 
 # Create context and queue
 ctx = cl.create_some_context()
 queue = cl.CommandQueue(ctx)
 
 # Prepare objects for input hash and result
-input_hash = bytearray('9a8ad92c50cae39aa2c5604fd0ab6d8c'.encode('ascii'))
+input_hash = bytearray(binascii.unhexlify(md5))
 result = bytearray(MAX_PW_LEN)
 
 # Prepare buffers
