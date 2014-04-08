@@ -1,16 +1,20 @@
+import sys
 import binascii
 import pyopencl as cl
 
 MAX_PW_LEN = 4
 
-md5 = '4a8a08f09d37b73795649038408b5f33'  # 'c'
+# Read hash from arguments
+if len(sys.argv) != 2:
+    print('Usage: ./crack_md5.py <md5hash>')
+    sys.exit(-1)
+input_hash = bytearray(binascii.unhexlify(sys.argv[1]))
 
 # Create context and queue
 ctx = cl.create_some_context()
 queue = cl.CommandQueue(ctx)
 
-# Prepare objects for input hash and result
-input_hash = bytearray(binascii.unhexlify(md5))
+# Prepare result object
 result = bytearray(MAX_PW_LEN)
 
 # Prepare buffers
@@ -32,4 +36,7 @@ prg.crack(queue, global_worksize, local_worksize, hash_buf, result_buf)
 # Copy result back to device
 result_string = bytearray(MAX_PW_LEN)
 cl.enqueue_read_buffer(queue,result_buf, result_string).wait()
-print(result_string)
+
+# Strip null bytes, convert to unicode
+plaintext = result_string.strip(b'\x00').decode('ascii')
+print('Result is "%s"!' % plaintext)

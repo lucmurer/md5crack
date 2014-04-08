@@ -322,11 +322,12 @@ void MD5_Final(unsigned char *result, MD5_CTX *ctx)
 
 __kernel void crack(__global const unsigned char *hash, __global char *result)
 {
-    __constant int len = 1;
-    __constant char string[len] = "c";
+    __private int id = get_global_id(0);
 
-    int id = get_global_id(0);
-    printf(">>> [Kernel %d] Running with global id %d\n", id, id);
+    __constant int len = 1;
+    __private char string[1] = { 0x61 + id };
+
+    printf(">>> [Kernel (%d)] Testing '%c'...\n", id, *string);
 
     // Private variables
     __private MD5_CTX context;
@@ -339,9 +340,10 @@ __kernel void crack(__global const unsigned char *hash, __global char *result)
 
     //printf(">>> [Kernel %d] Hash: %s vs %s\n", id, hash, digest);
 
-    if (hash == digest) {
-        printf(">>> [Kernel %d] Hash is c!\n", id);
-    } else {
-        printf(">>> [Kernel %d] Hash is c!\n", id);
+    if (*hash == *digest) {
+        // Copy matching string from private to global memory
+        for (int i = 0; i < len; i++) {
+            result[i] = string[i];
+        }
     }
 }
