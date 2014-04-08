@@ -2,7 +2,7 @@ import sys
 import binascii
 import pyopencl as cl
 
-MAX_PW_LEN = 4
+MAX_PW_LEN = 3
 
 # Read hash from arguments
 if len(sys.argv) != 2:
@@ -27,7 +27,7 @@ with open('md5.cl', 'r') as f:
     prg = cl.Program(ctx, fstr).build()
 
 # Define work sizes
-global_worksize = (26,)
+global_worksize = (26, 26, 26)
 local_worksize = None
 
 # Run kernel!
@@ -35,8 +35,11 @@ prg.crack(queue, global_worksize, local_worksize, hash_buf, result_buf)
 
 # Copy result back to device
 result_string = bytearray(MAX_PW_LEN)
-cl.enqueue_read_buffer(queue,result_buf, result_string).wait()
+cl.enqueue_read_buffer(queue, result_buf, result_string).wait()
 
 # Strip null bytes, convert to unicode
 plaintext = result_string.strip(b'\x00').decode('ascii')
-print('Result is "%s"!' % plaintext)
+if plaintext:
+    print('Result is "%s"!' % plaintext)
+else:
+    print('Did not find a result.')

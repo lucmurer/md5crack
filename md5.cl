@@ -320,14 +320,27 @@ void MD5_Final(unsigned char *result, MD5_CTX *ctx)
     //memset(ctx, 0, sizeof(*ctx));
 }
 
+/**
+ * Function to compare a global and a private string. Returns 0 if the strings
+ * are equal and 1 if they aren't.
+ */
+int compare(__global const unsigned char *a, __private const unsigned char *b, unsigned int len)
+{
+    for (int i = 0; i < len; i++) {
+        if (a[i] != b[i]) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 __kernel void crack(__global const unsigned char *hash, __global char *result)
 {
-    __private int id = get_global_id(0);
+    __private int id[3] = { get_global_id(0), get_global_id(1), get_global_id(2) };
 
-    __constant int len = 1;
-    __private char string[1] = { 0x61 + id };
+    __private char string[3] = { 0x61 + id[0], 0x61 + id[1], 0x61 + id[2] };
 
-    printf(">>> [Kernel (%d)] Testing '%c'...\n", id, *string);
+    printf(">>> [Kernel (%d,%d,%d)] Testing '%c%c%c'...\n", id[0], id[1], id[2], string[0], string[1], string[2]);
 
     // Private variables
     __private MD5_CTX context;
@@ -335,14 +348,13 @@ __kernel void crack(__global const unsigned char *hash, __global char *result)
 
     // Calculate hash
     MD5_Init(&context);
-    MD5_Update(&context, (const void *)string, len);
+    MD5_Update(&context, (const void *)string, 3);
     MD5_Final(digest, &context);
 
-    //printf(">>> [Kernel %d] Hash: %s vs %s\n", id, hash, digest);
-
-    if (*hash == *digest) {
-        // Copy matching string from private to global memory
-        for (int i = 0; i < len; i++) {
+    // Copy matching string from private to global memory
+    if (compare(hash, digest, 16) == 0) {
+        printf("MATCH\n");
+        for (int i = 0; i < 3; i++) {
             result[i] = string[i];
         }
     }
