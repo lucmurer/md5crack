@@ -52,4 +52,6 @@ else:
     print('Did not find a result.')
 
 # Print stats
-print('\nTime it took to finish: %fs' % (t1 - t0))
+print('\nStats\n-----\n')
+print('- Elapsed time: %fs' % (t1 - t0))
+print('- Keyspace: %d' % (26 ** MAX_PW_LEN))
