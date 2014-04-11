@@ -1,4 +1,5 @@
 import sys
+import time
 import binascii
 import pyopencl as cl
 
@@ -14,8 +15,9 @@ input_hash = bytearray(binascii.unhexlify(sys.argv[1]))
 ctx = cl.create_some_context()
 queue = cl.CommandQueue(ctx)
 
-# Prepare result object
+# Prepare result objects
 result = bytearray(MAX_PW_LEN)
+result_string = bytearray(MAX_PW_LEN)
 
 # Prepare buffers
 mf = cl.mem_flags
@@ -30,12 +32,17 @@ with open('md5.cl', 'r') as f:
 global_worksize = (26, 26, 26)
 local_worksize = None
 
+# Start measuring time
+t0 = time.time()
+
 # Run kernel!
 prg.crack(queue, global_worksize, local_worksize, hash_buf, result_buf)
 
 # Copy result back to device
-result_string = bytearray(MAX_PW_LEN)
 cl.enqueue_read_buffer(queue, result_buf, result_string).wait()
+
+# Get elapsed time
+t1 = time.time()
 
 # Strip null bytes, convert to unicode
 plaintext = result_string.strip(b'\x00').decode('ascii')
@@ -43,3 +50,6 @@ if plaintext:
     print('Result is "%s"!' % plaintext)
 else:
     print('Did not find a result.')
+
+# Print stats
+print('\nTime it took to finish: %fs' % (t1 - t0))
