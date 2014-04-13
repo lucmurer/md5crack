@@ -1,7 +1,10 @@
+#!/usr/bin/python3
+
 import sys
 import time
 import binascii
 import pyopencl as cl
+import math as m
 
 MAX_PW_LEN = 3
 
@@ -29,7 +32,7 @@ with open('md5.cl', 'r') as f:
     prg = cl.Program(ctx, fstr).build()
 
 # Define work sizes
-global_worksize = (26, 26, 26)
+global_worksize = (int(m.pow(26,2)), int(m.pow(26,2)), int(m.pow(26,2)))
 local_worksize = None
 
 # Start measuring time

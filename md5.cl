@@ -43,6 +43,8 @@
 #pragma OPENCL EXTENSION cl_intel_printf : enable
 #endif
 
+#define MAX_STRING_SIZE 10
+#define NUM_CHARS 26
 /*
  * Function declarations.
  */
@@ -338,24 +340,41 @@ __kernel void crack(__global const unsigned char *hash, __global char *result)
 {
     __private int id[3] = { get_global_id(0), get_global_id(1), get_global_id(2) };
 
-    __private char string[3] = { 0x61 + id[0], 0x61 + id[1], 0x61 + id[2] };
+    // Calculate the string to compute the hash from
+    __private char string[MAX_STRING_SIZE] = { 0x61 + (id[0]/NUM_CHARS), 
+                                               0x61 + (id[0]%NUM_CHARS), 
+                                               0x61 + (id[1]/NUM_CHARS),
+                                               0x61 + (id[1]%NUM_CHARS),
+                                               0x61 + (id[2]/NUM_CHARS),
+                                               0x61 + (id[2]%NUM_CHARS) };
 
-    printf(">>> [Kernel (%d,%d,%d)] Testing '%c%c%c'...\n", id[0], id[1], id[2], string[0], string[1], string[2]);
+    printf(">>> [Kernel (%d,%d,%d)] Testing '%c%c%c%c%c%c__'...\n", id[0], id[1], id[2], string[0], string[1], string[2],string[3],string[4],string[5]);
 
     // Private variables
     __private MD5_CTX context;
     __private unsigned char digest[16];
+    __private unsigned char i, j;
 
-    // Calculate hash
-    MD5_Init(&context);
-    MD5_Update(&context, (const void *)string, 3);
-    MD5_Final(digest, &context);
+    // Calculate work size
+    for (i = 0; i < NUM_CHARS; i++)
+    {
+      string[6] = 0x61 + i;
+      for (j = 0; j < NUM_CHARS; j++)
+      {
+        string[7] = 0x61 + j;
+        
+        // Calculate hash
+        MD5_Init(&context);
+        MD5_Update(&context, (const void *)string, MAX_STRING_SIZE);
+        MD5_Final(digest, &context);
 
-    // Copy matching string from private to global memory
-    if (compare(hash, digest, 16) == 0) {
-        printf("MATCH\n");
-        for (int i = 0; i < 3; i++) {
-            result[i] = string[i];
+        // Copy matching string from private to global memory
+        if (compare(hash, digest, 16) == 0) {
+            printf("MATCH\n");
+            for (int i = 0; i < MAX_STRING_SIZE; i++) {
+                result[i] = string[i];
+            }
         }
+      }
     }
 }
