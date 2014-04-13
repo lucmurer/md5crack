@@ -6,7 +6,7 @@ import binascii
 import pyopencl as cl
 import math as m
 
-MAX_PW_LEN = 3
+MAX_PW_LEN = 8
 
 # Read hash from arguments
 if len(sys.argv) != 2:
@@ -32,7 +32,7 @@ with open('md5.cl', 'r') as f:
     prg = cl.Program(ctx, fstr).build()
 
 # Define work sizes
-global_worksize = (int(m.pow(26,2)), int(m.pow(26,2)), int(m.pow(26,2)))
+global_worksize = (int(m.pow(26,2)), int(m.pow(26,1)), int(m.pow(26,1)))
 local_worksize = None
 
 # Start measuring time
@@ -58,3 +58,15 @@ else:
 print('\nStats\n-----\n')
 print('- Elapsed time: %fs' % (t1 - t0))
 print('- Keyspace: %d' % (26 ** MAX_PW_LEN))
+print('- Searched: %d' % ((26 ** 6)))
+
+maxtime = ((26 ** 2) * (t1 - t0))
+
+days = maxtime / (24*60*60)
+maxtime = maxtime % (24*60*60)
+hours = maxtime / (60 * 60)
+maxtime = maxtime % (60*60)
+mins = maxtime / 60
+secs = maxtime % 60
+
+print('- Time to search keyspace ((26^2)^3): %d days, %d hours, %d mins, %d seconds' % (days, hours, mins, secs))

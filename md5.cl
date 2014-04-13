@@ -43,7 +43,7 @@
 #pragma OPENCL EXTENSION cl_intel_printf : enable
 #endif
 
-#define MAX_STRING_SIZE 10
+#define MAX_STRING_SIZE 8
 #define NUM_CHARS 26
 /*
  * Function declarations.
@@ -216,6 +216,8 @@ static const void *body(MD5_CTX *ctx, const void *data, unsigned long size)
  
 void MD5_Init(MD5_CTX *ctx)
 {
+    unsigned int i, j; 
+    
     ctx->a = 0x67452301;
     ctx->b = 0xefcdab89;
     ctx->c = 0x98badcfe;
@@ -348,12 +350,12 @@ __kernel void crack(__global const unsigned char *hash, __global char *result)
                                                0x61 + (id[2]/NUM_CHARS),
                                                0x61 + (id[2]%NUM_CHARS) };
 
-    printf(">>> [Kernel (%d,%d,%d)] Testing '%c%c%c%c%c%c__'...\n", id[0], id[1], id[2], string[0], string[1], string[2],string[3],string[4],string[5]);
+    //printf(">>> [Kernel (%d,%d,%d)] Testing '%c%c%c%c%c%c__'...\n", id[0], id[1], id[2], string[0], string[1], string[2],string[3],string[4],string[5]);
 
     // Private variables
     __private MD5_CTX context;
     __private unsigned char digest[16];
-    __private unsigned char i, j;
+    __private unsigned char i, j, k;
 
     // Calculate work size
     for (i = 0; i < NUM_CHARS; i++)
@@ -367,12 +369,17 @@ __kernel void crack(__global const unsigned char *hash, __global char *result)
         MD5_Init(&context);
         MD5_Update(&context, (const void *)string, MAX_STRING_SIZE);
         MD5_Final(digest, &context);
-
+        
+//         if (compare((const __global unsigned char *)string, (const unsigned char *)"ayamam", 6) == 0)
+//         {
+//           printf("%s: %x\n", string, digest);
+//         }
+// 
         // Copy matching string from private to global memory
         if (compare(hash, digest, 16) == 0) {
             printf("MATCH\n");
-            for (int i = 0; i < MAX_STRING_SIZE; i++) {
-                result[i] = string[i];
+            for (int k = 0; k < MAX_STRING_SIZE; k++) {
+                result[k] = string[k];
             }
         }
       }
